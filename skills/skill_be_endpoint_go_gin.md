@@ -81,11 +81,122 @@ func CreateUser(ctx context.Context, req CreateUserReq) (*User, error) {
 ### 3. internal/{module} (Repository 层)
 - 数据访问
 - 可 Mock
+- **重要**：所有实体的增删改查必须限制在自身模块的 `mutation.go` 和 `repository.go` 中
 
 ```go
-// internal/users/mutation.go
+// internal/users/repository.go - 查询操作
+func GetByID(ctx context.Context, id string) (*User, error) {
+    var user User
+    err := datastore.MongoDB.Collection("users").FindOne(ctx, bson.M{"_id": id}).Decode(&user)
+    if err != nil {
+        return nil, errors.WithStack(err)  // 底层包 WithStack
+    }
+    return &user, nil
+}
+
+// internal/users/mutation.go - 变更操作
 func Create(ctx context.Context, user *User) error {
-    return datastore.MySQL.Create(user).Error
+    _, err := datastore.MongoDB.Collection("users").InsertOne(ctx, user)
+    if err != nil {
+        return errors.WithStack(err)  // 底层包 WithStack
+    }
+    return nil
+}
+```
+
+> ⚠️ **CRUD 隔离原则**：禁止在其他模块或 compound 层直接操作某实体的数据库。所有数据操作必须通过该实体模块的 repository.go（查询）和 mutation.go（变更）暴露的方法。这样改动时只需修改一处，避免"满天飞"。
+
+## 枚举定义规范
+
+枚举值**必须从 1 开始**，不要从 0 开始。原因：
+- 0 值容易与"未设置/默认值"混淆
+- 方便判断字段是否被显式设置
+- 避免 JSON 序列化时的歧义
+
+```go
+// internal/users/enums.go
+
+// ❌ 错误示例：从 0 开始
+type UserStatus int
+const (
+    UserStatusUnknown UserStatus = iota  // 0 - 容易混淆
+    UserStatusActive                      // 1
+    UserStatusInactive                    // 2
+)
+
+// ✅ 正确示例：从 1 开始
+type UserStatus int
+const (
+    UserStatusActive   UserStatus = iota + 1  // 1
+    UserStatusInactive                        // 2
+    UserStatusBanned                          // 3
+)
+
+// 或者显式定义
+type OrderStatus int
+const (
+    OrderStatusPending   OrderStatus = 1
+    OrderStatusPaid      OrderStatus = 2
+    OrderStatusShipped   OrderStatus = 3
+    OrderStatusCompleted OrderStatus = 4
+    OrderStatusCancelled OrderStatus = 5
+)
+```
+
+## 错误处理规范
+
+### WithStack 原则
+
+**底层包一次 WithStack，上层不要重复包**。确保所有错误都有堆栈信息，但避免堆栈重复。
+
+```go
+// ✅ 正确：在 repository 层（底层）包 WithStack
+// internal/users/repository.go
+func GetByID(ctx context.Context, id string) (*User, error) {
+    var user User
+    err := datastore.MongoDB.Collection("users").FindOne(ctx, bson.M{"_id": id}).Decode(&user)
+    if err != nil {
+        return nil, errors.WithStack(err)  // 底层包一次
+    }
+    return &user, nil
+}
+
+// ✅ 正确：compound 层直接返回，不要再包
+// gin/compound/user.go
+func GetUser(ctx context.Context, id string) (*User, error) {
+    user, err := users.GetByID(ctx, id)
+    if err != nil {
+        return nil, err  // 直接返回，不要再 WithStack
+    }
+    return user, nil
+}
+
+// ❌ 错误：重复包 WithStack
+func GetUser(ctx context.Context, id string) (*User, error) {
+    user, err := users.GetByID(ctx, id)
+    if err != nil {
+        return nil, errors.WithStack(err)  // 重复了！堆栈会很长
+    }
+    return user, nil
+}
+```
+
+### 错误包装层级
+
+| 层级 | 职责 | 是否 WithStack |
+|------|------|---------------|
+| repository.go / mutation.go | 数据访问 | ✅ 是（底层唯一包装点） |
+| compound | 业务编排 | ❌ 否，直接返回或 Wrap 添加上下文 |
+| api handler | 响应封装 | ❌ 否，使用 response.Error 处理 |
+
+```go
+// 如果需要添加上下文信息，用 Wrap 而不是 WithStack
+func ProcessOrder(ctx context.Context, orderID string) error {
+    order, err := orders.GetByID(ctx, orderID)
+    if err != nil {
+        return errors.Wrap(err, "failed to get order")  // 添加上下文，不是 WithStack
+    }
+    // ...
 }
 ```
 
@@ -205,3 +316,7 @@ v1.POST("/order/create",
 - [ ] 单测覆盖 service：happy path + >=2 异常
 - [ ] 考虑国内/海外版差异
 - [ ] MQ 消息处理幂等
+- [ ] **存储选择**：优先 MongoDB，仅严格事务场景用 MySQL
+- [ ] **枚举值从 1 开始**：不要用 0 作为有效值
+- [ ] **CRUD 隔离**：增删改查限制在 mutation.go / repository.go
+- [ ] **错误处理**：底层 WithStack 一次，上层不重复包
