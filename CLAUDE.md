@@ -30,9 +30,9 @@ Jotmo 是一款快记应用，后端由 15 个 Go/Python 微服务组成：
 - 详见：`docs/domestic_overseas_guide.md`
 
 ### MQ 实现规范
-- **标准参考**：`jotmo-intelligent` 的 `xhy_record` 分支
 - 必须实现断线重连
 - 消息处理必须幂等
+- 参考 `jotmo-intelligent` 服务的 `pkg/mq/` 目录实现
 - 详见：`docs/mq_implementation_guide.md`
 
 ### 数据安全

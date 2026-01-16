@@ -74,7 +74,7 @@
   - Default：**RabbitMQ**（direct exchange）
   - Alternatives：Kafka（高吞吐场景）
   - 偏离触发条件：吞吐/顺序性/延迟/一致性语义诉求
-  - **重要**：实现参考 `jotmo-intelligent` 的 `xhy_record` 分支
+  - 实现参考：`jotmo-intelligent` 服务的 `pkg/mq/` 目录
 
 - **实时推送（客户端）**
   - Default：

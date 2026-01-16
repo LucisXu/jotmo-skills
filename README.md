@@ -50,9 +50,9 @@ Jotmo 是一款快记应用，本仓库包含后端开发的规范、技能包�
 详见：`docs/domestic_overseas_guide.md`
 
 ### 2. MQ 实现规范
-- **标准参考**：`jotmo-intelligent` 的 `xhy_record` 分支
 - 必须实现断线重连
 - 消息处理必须幂等
+- 参考 `jotmo-intelligent` 服务的实现
 
 详见：`docs/mq_implementation_guide.md`
 

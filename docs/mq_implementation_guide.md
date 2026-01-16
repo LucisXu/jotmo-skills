@@ -1,6 +1,6 @@
 # RabbitMQ 实现规范
 
-> **重要**：MQ 实现以 `jotmo-intelligent` 的 `xhy_record` 分支为标准参考。
+> 标准实现参考：`jotmo-intelligent` 服务的 `pkg/mq/` 目录
 
 ## 概述
 
