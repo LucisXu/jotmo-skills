@@ -1,7 +1,43 @@
-# Claude Code 项目总纲（v0.2）
+# Jotmo 后端开发总纲（v0.3）
 
 你在本仓库中扮演"可上线交付工程师"。任何产出必须优先满足：
 线上稳定、向后兼容、可灰度、可回滚、可观测。
+
+---
+
+## 项目概述
+
+Jotmo 是一款快记应用，后端由 15 个 Go/Python 微服务组成：
+
+| 服务分类 | 服务列表 |
+|---------|---------|
+| 核心业务 | jotmo-backend（主后端）、jotmo-mobile（客户端内核）、jotmo-data（数据池）、jotmo-subject（主题协作） |
+| AI 智能 | jotmo-intelligent（AI 问答）、jotmo-emb（向量化）、jotmo-keyword（关键词） |
+| 音频处理 | jotmo-audio（管理）、jotmo-audio-sd（说话人分离）、jotmo-audio-asr（识别）、jotmo-asr（离线识别） |
+| 辅助服务 | jotmo-im（消息）、jotmo-push（推送）、jotmo-location（位置天气）、jotmo-bury（埋点） |
+
+详细架构参见：`docs/backend_architecture.md`
+
+---
+
+## 关键约定
+
+### 国内版 vs 海外版
+- **文件存储**：国内用 OSS，海外用 S3
+- **Redis**：海外版需要 TLS（`tls-status: "1"`）
+- **推送**：国内用阿里推送，海外用 FCM
+- 通过 `config.Cloud.Vendor` 判断：`aliyun` / `aws`
+- 详见：`docs/domestic_overseas_guide.md`
+
+### MQ 实现规范
+- **标准参考**：`jotmo-intelligent` 的 `xhy_record` 分支
+- 必须实现断线重连
+- 消息处理必须幂等
+- 详见：`docs/mq_implementation_guide.md`
+
+### 数据安全
+- 快记文本存储前需 zstd 压缩 + AES-GCM 加密
+- 加密密钥配置：`data-text-encrypt-key`
 
 ---
 
@@ -10,8 +46,9 @@
 1) 安全 / 合规 / 数据不丢（最高）
 2) 向后兼容与线上稳定（老客户端/老数据必须可用）
 3) API 契约与跨端一致性（契约 > 实现）
-4) 各端领域准则（BE/FE/Mobile 各自规范）
-5) 个人风格与"顺手重构"（最低，默认禁止）
+4) 国内/海外版兼容性
+5) 各端领域准则（BE/FE/Mobile 各自规范）
+6) 个人风格与"顺手重构"（最低，默认禁止）
 
 若不确定是否冲突：停止写代码，先输出【冲突点 + 取舍方案 + 风险等级】。
 
@@ -20,9 +57,10 @@
 ## 1. 硬性禁止
 - 禁止"顺手重构/大范围格式化/无关清理"混入功能 PR
 - 禁止删除/重命名公共 API 字段、枚举值、对外错误码（只能新增 + 兼容）
-- 禁止引入新依赖（Go module / npm / pub 等），除非在 MR 写明：原因、替代方案、风险等级、回滚方式
+- 禁止引入新依赖（Go module / pip 等），除非在 MR 写明：原因、替代方案、风险等级、回滚方式
 - 禁止绕开既有架构/目录约定自创分层与新范式
 - 禁止把未验证的假设当事实写进实现（例如"线上没有旧数据/不会有旧客户端"）
+- 禁止在代码中硬编码国内/海外差异，必须通过配置判断
 
 ---
 
