@@ -1,31 +1,278 @@
-# Claude Code 任务起手式（v0.2）
-> 目标：先收敛不确定性，再写最小 diff，最后输出 Gatekeeper 过闸的 MR Description。
+# Claude 起手式（提示词模板）
+
+复制适合你场景的提示词，开始和 Claude 对话。
 
 ---
 
-## 1) Spec Interview（规格访谈｜适合 PM/设计/不熟技术的人）
+## 快速索引
+
+| 我是 | 我要做 | 用这个 |
+|------|--------|--------|
+| 产品/设计/任何人 | 把想法变成规格文档 | [规格访谈](#1-规格访谈) |
+| 任何人 | 技术选型/不确定怎么做 | [技术决策](#2-技术决策) |
+| 前端开发 | 实现新页面/组件 | [前端开发](#3-前端开发) |
+| 后端开发 | 实现新接口/服务 | [后端开发](#4-后端开发) |
+| 后端开发 | 实现 MQ 消费者 | [MQ 开发](#5-mq-开发) |
+| 开发者 | 修复 Bug | [Bug 修复](#6-bug-修复) |
+| 开发者 | 提交代码前检查 | [MR 准备](#7-mr-准备) |
+| 开发者 | 代码评审 | [代码评审](#8-代码评审) |
+| 任何人 | 理解现有代码 | [代码理解](#9-代码理解) |
+
+---
+
+## 1. 规格访谈
+
+**适合**：产品经理、设计师、或任何有想法但不确定怎么表达的人
+
+**效果**：Claude 会追问关键细节，帮你整理出清晰的需求规格文档
+
+```
 你先不要写代码。
-1) 阅读：CLAUDE.md、docs/spec_packet_template.md、skills/README.md。
-2) 对我提供的需求进行 Spec Interview：提出 12~20 个关键追问（用户体验/验收、兼容、隐私、性能/成本、上线灰度与观测）。
-3) 等我回答后，整理为【Product Spec】（只写用户可见与验收，不写技术黑盒）。
-4) 生成【Tech Brief 草案】并标记 Gatekeeper 决策点（含风险等级）。
-5) 列出建议引用的 skills 文件清单。
+
+请阅读：CLAUDE.md、docs/spec_packet_template.md、skills/README.md
+
+现在对我提供的需求进行 Spec Interview：
+1. 提出 12~20 个关键追问（用户体验/验收、兼容、隐私、性能/成本、上线灰度与观测）
+2. 等我回答后，整理为【Product Spec】（只写用户可见与验收，不写技术黑盒）
+3. 生成【Tech Brief 草案】并标记 Gatekeeper 决策点（含风险等级）
+4. 列出建议引用的 skills 文件清单
+
+我的需求是：
+[在这里描述你的需求]
+```
 
 ---
 
-## 2) Execution（执行模式｜适合开发同学）
-按 CLAUDE.md 执行。
-1) 先阅读 CLAUDE.md 与相关 skills（在 Plan 中引用要点）。
-2) 输出：Implementation Plan → Diff Plan → Test Plan → Rollout Plan。
-3) 等我确认后，输出最小必要代码 diff（禁止顺手重构）。
-4) 最后必须输出【MR Description】并严格遵守 CLAUDE.md 的 MR 描述契约 v0.2（必须包含 Change Inventory）。
+## 2. 技术决策
 
----
+**适合**：需要做技术选型、或不确定实现方案的人
 
-## 3) High Risk（高风险模式｜L2/L3 强制）
+**效果**：Claude 会分析选项、对比权衡、给出推荐方案
+
+```
 你先不要写代码。
-1) 阅读：CLAUDE.md、docs/approved_components.md、docs/adr_template.md、skills/skill_tech_discovery_and_decision.md。
-2) 先输出【Decision Pack】（按 skill_tech_discovery_and_decision.md 的固定结构）。
-3) 标注风险等级与 Gatekeeper 决策点。
-4) 只有在我确认 + Gatekeeper 通过后，才允许输出代码 diff。
-5) 最后必须输出【MR Description】并严格遵守 MR 描述契约 v0.2。
+
+请阅读：CLAUDE.md、docs/approved_components.md、docs/adr_template.md、skills/skill_tech_discovery_and_decision.md
+
+现在对我的问题进行 Tech Discovery Interview：
+1. 先提出关键追问（数据/隐私、质量定义、延迟、成本、可靠性、兼容性）
+2. 等我回答后，产出【Decision Pack】：
+   - Problem
+   - Constraints
+   - Options（含 Default/Golden Path）
+   - Trade-offs
+   - Recommendation
+   - Evaluation
+   - Rollout
+   - Open Questions
+3. 检查是否偏离 approved_components.md 的默认方案，如偏离需写 ADR
+
+我的问题是：
+[在这里描述你的技术问题]
+```
+
+---
+
+## 3. 前端开发
+
+**适合**：前端开发者实现页面或组件
+
+**效果**：Claude 会遵循前端规范，先出计划再写代码
+
+```
+请阅读：CLAUDE.md、skills/skill_fe_guidelines.md、skills/skill_api_contract.md
+
+现在帮我实现一个前端功能：
+1. 先输出 Implementation Plan（组件结构、状态管理、API 调用）
+2. 确认后再写代码
+3. 注意：
+   - 容忍后端返回的未知字段
+   - 处理各种状态（加载中/空/成功/失败/无权限）
+   - 配合后端开关（开/关体验都完整）
+4. 最后输出符合 MR 描述契约的【MR Description】
+
+我要实现的功能是：
+[在这里描述前端需求]
+
+相关的 API 接口文档：
+[如果有的话贴在这里]
+```
+
+---
+
+## 4. 后端开发
+
+**适合**：后端开发者实现接口或服务
+
+**效果**：Claude 会遵循后端架构，先出计划再写代码
+
+```
+请阅读：CLAUDE.md、skills/skill_be_endpoint_go_gin.md、skills/skill_api_contract.md
+
+现在帮我实现一个后端接口：
+1. 先输出：
+   - Implementation Plan（文件清单、改动点、影响面、风险等级）
+   - Diff Plan（最小改动策略）
+   - Test Plan（Given-When-Then 用例）
+   - Rollout Plan（开关、灰度、观测、回滚）
+2. 等我确认后，输出最小必要代码 diff
+3. 注意：
+   - 遵循项目结构（gin/api → gin/compound → internal）
+   - 考虑国内/海外版兼容性
+   - 日志包含 request_id / user_id
+   - 错误码统一封装
+4. 最后输出符合 MR 描述契约的【MR Description】
+
+我要实现的功能是：
+[在这里描述后端需求]
+```
+
+---
+
+## 5. MQ 开发
+
+**适合**：需要实现消息队列消费者的后端开发者
+
+**效果**：Claude 会遵循 MQ 规范，确保断线重连和幂等处理
+
+```
+请阅读：CLAUDE.md、docs/mq_implementation_guide.md、skills/skill_mq_consumer.md
+
+现在帮我实现一个 MQ 消费者：
+1. 先输出 Implementation Plan
+2. 必须包含：
+   - 断线重连机制
+   - 消息处理幂等策略
+   - 重试与错误处理
+   - 优雅退出
+3. 参考 jotmo-intelligent 服务的 pkg/mq/ 实现
+4. 最后输出符合 MR 描述契约的【MR Description】
+
+我要处理的消息类型是：
+[在这里描述消息内容和处理逻辑]
+```
+
+---
+
+## 6. Bug 修复
+
+**适合**：需要修复 Bug 的开发者
+
+**效果**：Claude 会分析问题、定位原因、给出最小修复方案
+
+```
+请阅读：CLAUDE.md
+
+帮我分析并修复一个 Bug：
+1. 先理解问题：复现步骤、期望行为、实际行为
+2. 分析可能原因
+3. 定位问题代码
+4. 输出最小修复方案（禁止顺手重构）
+5. 输出测试用例（验证修复 + 回归测试）
+6. 最后输出【MR Description】
+
+Bug 描述：
+[在这里描述 Bug]
+
+相关代码/日志：
+[在这里贴相关信息]
+```
+
+---
+
+## 7. MR 准备
+
+**适合**：代码写完，准备提交 MR 的开发者
+
+**效果**：Claude 会检查代码质量，生成符合规范的 MR 描述
+
+```
+请阅读：CLAUDE.md、skills/skill_mr_gatekeeper_ready.md
+
+我已经完成代码，请帮我准备 MR：
+1. 检查代码是否符合规范
+2. 检查是否遗漏测试
+3. 生成符合 MR 描述契约 v0.2 的【MR Description】
+4. 列出可能需要 Gatekeeper 关注的风险点
+
+我改动的文件是：
+[在这里列出改动的文件]
+
+我实现的功能是：
+[在这里简述功能]
+```
+
+---
+
+## 8. 代码评审
+
+**适合**：需要评审别人代码的开发者
+
+**效果**：Claude 会按团队规范检查代码，给出评审意见
+
+```
+请阅读：CLAUDE.md
+
+帮我评审这段代码：
+1. 检查是否符合团队规范
+2. 检查向后兼容性
+3. 检查安全性
+4. 检查测试覆盖
+5. 给出改进建议（分为"必须修改"和"建议优化"）
+
+代码如下：
+[在这里贴代码或 MR 链接]
+```
+
+---
+
+## 9. 代码理解
+
+**适合**：需要理解现有代码的任何人
+
+**效果**：Claude 会解释代码逻辑、数据流向、关键设计
+
+```
+帮我理解这段代码：
+1. 这段代码做了什么
+2. 数据是怎么流转的
+3. 有哪些关键的设计决策
+4. 可能存在哪些风险或技术债
+
+代码位置：
+[在这里指出代码文件路径或贴代码]
+
+我特别想了解：
+[在这里提出你的具体问题]
+```
+
+---
+
+## 使用技巧
+
+### 1. 提供足够的上下文
+
+Claude 知道的越多，输出越准确：
+- 相关的需求文档
+- 涉及的代码文件
+- 已有的设计决策
+- 必须满足的约束
+
+### 2. 分步确认
+
+复杂任务时，让 Claude 先出计划，确认后再写代码：
+- 避免方向错误导致返工
+- 方便非技术同学参与把关
+
+### 3. 及时纠正
+
+如果 Claude 的理解有偏差，直接说：
+- "不对，我的意思是..."
+- "这里需要考虑..."
+- "约束条件还有..."
+
+### 4. 保持简洁
+
+描述需求时：
+- 说清楚"是什么"和"为什么"
+- 不需要说"怎么做"（这是 Claude 的工作）

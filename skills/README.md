@@ -1,18 +1,77 @@
-# skills/ 使用说明（v0.2）
+# skills/ 执行套路库
 
-skills 是"作业套路库"。Claude 写代码前必须：
-1) 阅读 CLAUDE.md
-2) 选择并阅读相关 skills（在 Plan 中引用要点）
-3) 按 skills checklist 输出实现、测试、发布计划
-4) 最后输出符合 MR 描述契约 v0.2 的【MR Description】
+这里存放**各场景的具体执行方法**，Claude 在写代码前会先阅读相关 skill。
 
-推荐选择：
-- Gatekeeper 过闸与 MR 描述：skill_mr_gatekeeper_ready
-- 技术黑盒/选型/不确定性：skill_tech_discovery_and_decision
-- 向后兼容：skill_backward_compat
-- API 契约：skill_api_contract
-- Go/Gin 新接口：skill_be_endpoint_go_gin
-- DB 变更：skill_db_change_mongo_mysql
-- 测试：skill_testing
-- 发布：skill_release_playbook
-- 前端规范：skill_fe_guidelines
+---
+
+## 使用方式
+
+1. Claude 阅读 `CLAUDE.md`（规则）
+2. 根据任务选择相关 skill
+3. 按 skill 中的 checklist 输出
+4. 最后输出符合规范的 MR Description
+
+---
+
+## Skills 分类
+
+### 通用 Skills（所有人适用）
+
+| Skill | 用途 |
+|-------|------|
+| `skill_mr_gatekeeper_ready.md` | 准备符合规范的 MR 描述 |
+| `skill_tech_discovery_and_decision.md` | 技术选型和决策 |
+| `skill_backward_compat.md` | 向后兼容策略 |
+| `skill_api_contract.md` | API 契约规范 |
+| `skill_testing.md` | 测试规范 |
+| `skill_release_playbook.md` | 发布与灰度 |
+
+### 后端 Skills
+
+| Skill | 用途 |
+|-------|------|
+| `skill_be_endpoint_go_gin.md` | Go/Gin 新接口开发 |
+| `skill_mq_consumer.md` | MQ 消费者开发 |
+| `skill_db_change_mongo_mysql.md` | 数据库变更 |
+
+### 前端 Skills
+
+| Skill | 用途 |
+|-------|------|
+| `skill_fe_guidelines.md` | 前端开发准则 |
+| `skill_fe_component.md` | 组件开发规范 |
+| `skill_fe_state.md` | 状态管理规范 |
+| `skill_fe_api.md` | 前端 API 调用规范 |
+
+---
+
+## 如何选择 Skill
+
+| 我要做的事 | 用这个 Skill |
+|-----------|-------------|
+| 写新接口（后端） | `skill_be_endpoint_go_gin.md` |
+| 写 MQ 消费者 | `skill_mq_consumer.md` |
+| 改数据库 | `skill_db_change_mongo_mysql.md` |
+| 写新组件（前端） | `skill_fe_component.md` |
+| 处理状态管理 | `skill_fe_state.md` |
+| 调用后端 API | `skill_fe_api.md` |
+| 技术选型 | `skill_tech_discovery_and_decision.md` |
+| 准备 MR | `skill_mr_gatekeeper_ready.md` |
+| 处理兼容性 | `skill_backward_compat.md` |
+
+---
+
+## 维护指南
+
+### 什么时候新增 Skill
+
+- 发现某类任务反复出现相同问题
+- 有新的最佳实践需要固化
+- 团队约定了新的开发规范
+
+### 如何新增 Skill
+
+1. 复制现有 skill 作为模板
+2. 包含：目标、步骤、checklist、示例
+3. 提 MR 说明新增原因
+4. 更新本文档的索引
